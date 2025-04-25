@@ -17,8 +17,8 @@ jobs:
       uses: astral-sh/setup-uv@v5
       with:
         version: "0.6.0"
-    - name: Install dependendies
-      run: pip install .
+    - name: Install dependendies, setup
+      run: pip install .; chmod +x collect_files.sh
     - name: Download tests script
       env:
         tests_url: ${{ secrets.TESTS_URL }}
