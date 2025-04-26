@@ -77,17 +77,17 @@ handle_file() {
     local final_name
 
     if [[ "$base" == "$dest" ]]; then
-        while [ -e "${dest}_${counter}" ]; do
+        while [ -e "${base}(${counter})" ]; do
             ((counter++))
         done
-        final_name="$(basename "${dest}_${counter}")"
-        cp -- "$src" "${dest}_${counter}"
+        final_name="$(basename "${base}(${counter})")"
+        cp -- "$src" "${base}(${counter})"
     else
-        while [ -e "${base}_${counter}.${ext}" ]; do
+        while [ -e "${base}(${counter}).${ext}" ]; do
             ((counter++))
         done
-        final_name="$(basename "${base}_${counter}.${ext}")"
-        cp -- "$src" "${base}_${counter}.${ext}"
+        final_name="$(basename "${base}(${counter}).${ext}")"
+        cp -- "$src" "${base}(${counter}).${ext}"
     fi
     
     file_map["$final_name"]="$src"
@@ -96,7 +96,7 @@ handle_file() {
 find "$input_dir" -type f -print0 | while IFS= read -r -d $'\0' file; do
     if [ -n "$max_depth" ]; then
         relative_path="${file#$input_dir/}"
-        depth=$(tr -cd '/' <<< "$relative_path" | wc -c)
+        depth=$(awk -F'/' '{print NF-1}' <<< "$relative_path")
         [ "$depth" -gt "$max_depth" ] && continue
     fi
 
