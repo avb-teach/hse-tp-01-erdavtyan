@@ -77,17 +77,17 @@ handle_file() {
     local final_name
 
     if [[ "$base" == "$dest" ]]; then
-        while [ -e "${base}(${counter})" ]; do
+        while [ -e "${dest}_${counter}" ]; do
             ((counter++))
         done
-        final_name="$(basename "${base}(${counter})")"
-        cp -- "$src" "${base}(${counter})"
+        final_name="$(basename "${dest}_${counter}")"
+        cp -- "$src" "${dest}_${counter}"
     else
-        while [ -e "${base}(${counter}).${ext}" ]; do
+        while [ -e "${base}_${counter}.${ext}" ]; do
             ((counter++))
         done
-        final_name="$(basename "${base}(${counter}).${ext}")"
-        cp -- "$src" "${base}(${counter}).${ext}"
+        final_name="$(basename "${base}_${counter}.${ext}")"
+        cp -- "$src" "${base}_${counter}.${ext}"
     fi
     
     file_map["$final_name"]="$src"
@@ -113,7 +113,7 @@ done
 
 echo "from collections import defaultdict"
 echo "result = defaultdict(list)"
-for filename in "${!file_map[@]}"; do
+for filename in $(printf '%s\n' "${!file_map[@]}" | sort); do
     escaped_path=$(python3 -c "import sys; print(repr(sys.argv[1]))" "${file_map[$filename]}")
     echo "result['$filename'].append($escaped_path)"
 done
