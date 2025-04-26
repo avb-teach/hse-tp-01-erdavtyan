@@ -66,31 +66,38 @@ if [ ! -w "$output_dir" ]; then
   exit 1
 fi
 
+declare -A file_map
+
 handle_file() {
     local src="$1"
     local dest="$2"
     local counter=1
     local base="${dest%.*}"
     local ext="${dest##*.}"
+    local final_name
 
     if [[ "$base" == "$dest" ]]; then
         while [ -e "${dest}_${counter}" ]; do
             ((counter++))
         done
+        final_name="$(basename "${dest}_${counter}")"
         cp -- "$src" "${dest}_${counter}"
     else
         while [ -e "${base}_${counter}.${ext}" ]; do
             ((counter++))
         done
+        final_name="$(basename "${base}_${counter}.${ext}")"
         cp -- "$src" "${base}_${counter}.${ext}"
     fi
+    
+    file_map["$final_name"]="$src"
 }
 
 find "$input_dir" -type f -not -type l -print0 | while IFS= read -r -d $'\0' file; do
     if [ -n "$max_depth" ]; then
         relative_path=$(realpath --relative-to="$input_dir" "$file")
-        relative_depth=$(awk -F'/' '{print NF-1}' <<< "$relative_path")
-        [ "$relative_depth" -gt "$max_depth" ] && continue
+        depth=$(tr -cd '/' <<< "$relative_path" | wc -c)
+        [ "$depth" -ge "$max_depth" ] && continue
     fi
 
     filename=$(basename -- "$file")
@@ -100,5 +107,13 @@ find "$input_dir" -type f -not -type l -print0 | while IFS= read -r -d $'\0' fil
         handle_file "$file" "$dest"
     else
         cp -- "$file" "$dest"
+        file_map["$filename"]="$file"
     fi
 done
+
+echo "from collections import defaultdict"
+echo "result = defaultdict(list)"
+for filename in "${!file_map[@]}"; do
+    echo "result['$filename'].append('${file_map[$filename]}')"
+done
+echo "print(dict(result))"
