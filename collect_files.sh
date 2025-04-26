@@ -93,11 +93,11 @@ handle_file() {
     file_map["$final_name"]="$src"
 }
 
-find "$input_dir" -type f -not -type l -print0 | while IFS= read -r -d $'\0' file; do
+find "$input_dir" -type f -print0 | while IFS= read -r -d $'\0' file; do
     if [ -n "$max_depth" ]; then
-        relative_path=$(realpath --relative-to="$input_dir" "$file")
+        relative_path="${file#$input_dir/}"
         depth=$(tr -cd '/' <<< "$relative_path" | wc -c)
-        [ "$depth" -ge "$max_depth" ] && continue
+        [ "$depth" -gt "$max_depth" ] && continue
     fi
 
     filename=$(basename -- "$file")
@@ -114,6 +114,7 @@ done
 echo "from collections import defaultdict"
 echo "result = defaultdict(list)"
 for filename in "${!file_map[@]}"; do
-    echo "result['$filename'].append('${file_map[$filename]}')"
+    escaped_path=$(python3 -c "import sys; print(repr(sys.argv[1]))" "${file_map[$filename]}")
+    echo "result['$filename'].append($escaped_path)"
 done
 echo "print(dict(result))"
